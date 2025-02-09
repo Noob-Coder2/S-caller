@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { store } from '../store/store';
 import HomeScreen from '../screens/HomeScreen';
 import CallLogScreen from '../screens/CallLogScreen';
+import ContactsList from '../components/ContactsList';
 import { Alert } from 'react-native';
 
 const Stack = createNativeStackNavigator();
@@ -16,6 +17,7 @@ const App = () => {
         <Stack.Navigator initialRouteName="Home">
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="CallLog" component={CallLogScreen} />
+          <Stack.Screen name="Contacts" component={ContactsList} />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>

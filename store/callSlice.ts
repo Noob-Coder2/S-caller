@@ -9,6 +9,7 @@ interface CallState {
     duration?: number;
     message?: string;
     phoneNumber: string;
+    note?: string;
   }>;
   sequenceState: {
     isRunning: boolean;

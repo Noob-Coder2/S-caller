@@ -5,12 +5,40 @@ import { addCallLog, startSequence, setSequenceError, updateSequenceProgress, en
 
 let callDetector: any = null;
 let callStartTime: number = 0;
+let callTimeout: NodeJS.Timeout | null = null;
+const CALL_TIMEOUT_MS = 60000; // 1 minute timeout
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 3000;
 
 export const initializeCallDetection = () => {
+  cleanupCallDetection(); // Cleanup any existing detector
+
   if (Platform.OS === 'android' && !callDetector) {
-    callDetector = new CallDetectorManager((event: string) => {
-      handleCallStates(event);
-    });
+    callDetector = new CallDetectorManager(
+      (event: string) => {
+        handleCallStates(event);
+      },
+      true, // Read phone state permission
+      () => {
+        console.log('Call detection failed to initialize');
+        store.dispatch(setSequenceError('Call detection initialization failed'));
+      },
+      {
+        title: 'Phone State Permission',
+        message: 'This app needs access to your phone state in order to react to incoming calls.',
+      }
+    );
+  }
+};
+
+export const cleanupCallDetection = () => {
+  if (callDetector) {
+    callDetector.dispose();
+    callDetector = null;
+  }
+  if (callTimeout) {
+    clearTimeout(callTimeout);
+    callTimeout = null;
   }
 };
 
@@ -21,9 +49,17 @@ const handleCallStates = (event: string) => {
     case 'Connected':
       callStartTime = Date.now();
       store.dispatch(updateFormData({ lastCallAnswered: true }));
+      // Set timeout for long calls
+      callTimeout = setTimeout(() => {
+        handleCallTimeout();
+      }, CALL_TIMEOUT_MS);
       break;
     
     case 'Disconnected':
+      if (callTimeout) {
+        clearTimeout(callTimeout);
+        callTimeout = null;
+      }
       const duration = Date.now() - callStartTime;
       store.dispatch(addCallLog({
         id: `${Date.now()}-${Math.random()}`,
@@ -49,7 +85,17 @@ const handleCallStates = (event: string) => {
   }
 };
 
-export const makeCall = async (phoneNumber: string) => {
+const handleCallTimeout = () => {
+  store.dispatch(addCallLog({
+    id: `${Date.now()}-${Math.random()}`,
+    timestamp: Date.now(),
+    type: 'call',
+    status: 'failed',
+    phoneNumber: store.getState().call.formData.phoneNumber
+  }));
+};
+
+export const makeCall = async (phoneNumber: string, retryCount = 0): Promise<boolean> => {
   try {
     const url = `tel:${phoneNumber}`;
     const supported = await Linking.canOpenURL(url);
@@ -67,7 +113,13 @@ export const makeCall = async (phoneNumber: string) => {
     }));
 
     await Linking.openURL(url);
+    return true;
   } catch (error) {
+    if (retryCount < MAX_RETRIES) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+      return makeCall(phoneNumber, retryCount + 1);
+    }
+
     store.dispatch(addCallLog({
       id: `${Date.now()}-${Math.random()}`,
       timestamp: Date.now(),
@@ -76,23 +128,27 @@ export const makeCall = async (phoneNumber: string) => {
       phoneNumber,
       message: error instanceof Error ? error.message : 'Call failed',
     }));
-    throw error;
+    return false;
   }
 };
 
 export const makeSequentialCalls = async (
   phoneNumber: string,
-  numberOfCalls: number
+  numberOfCalls: number,
+  delayBetweenCalls: number = 3000
 ) => {
   try {
     store.dispatch(startSequence({ totalSteps: numberOfCalls }));
+    initializeCallDetection();
 
     for (let i = 0; i < numberOfCalls; i++) {
-      await makeCall(phoneNumber);
+      const success = await makeCall(phoneNumber);
       store.dispatch(updateSequenceProgress());
 
-      if (i < numberOfCalls - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+      if (!success && i < numberOfCalls - 1) {
+        await new Promise(resolve => setTimeout(resolve, delayBetweenCalls * 2)); // Double delay after failure
+      } else if (i < numberOfCalls - 1) {
+        await new Promise(resolve => setTimeout(resolve, delayBetweenCalls));
       }
     }
   } catch (error) {
@@ -102,5 +158,6 @@ export const makeSequentialCalls = async (
     throw error;
   } finally {
     store.dispatch(endSequence());
+    cleanupCallDetection();
   }
 };

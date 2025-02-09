@@ -9,14 +9,29 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSContactsUsageDescription": "This app needs access to your contacts to allow you to pick a contact.",
+        "NSCameraUsageDescription": "This app needs access to the camera to scan QR codes or take photos.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to allow you to upload photos.",
+        "NSMicrophoneUsageDescription": "This app needs access to your microphone to make phone calls.",
+        "NSPhotoLibraryAddUsageDescription": "This app needs access to your photo library to allow you to save photos.",
+        "UIBackgroundModes": ["fetch", "location"]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.pro_coder2.Scaller"
+      "package": "com.pro_coder2.Scaller",
+      "permissions": [
+        "READ_CONTACTS", 
+        "CALL_PHONE", 
+        "READ_PHONE_STATE", 
+        "SEND_SMS", 
+        "RECEIVE_SMS"
+      ]
     },
     "web": {
       "bundler": "metro",

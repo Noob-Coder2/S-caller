@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
-import { View, TextInput, Button, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useCallback, useEffect,useState } from 'react';
+import { View, TextInput, Button, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { makeSequentialCalls } from '../services/CallService';
 import { RootState } from '../store/store';
@@ -8,22 +8,29 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import { validatePhoneNumber, validateNumberOfCalls } from '../utils/validators';
 import { handleError } from '../utils/errorHandler';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { sendSms } from '@/services/SmsService';
+import { RootStackParamList } from '../navigation/types';
 
 const CallInput = () => {
   const dispatch = useDispatch();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { phoneNumber, numCalls, message } = useSelector(
     (state: RootState) => state.call.formData
   );
   const { isRunning, currentIndex } = useSelector(
     (state: RootState) => state.call.sequenceState
   );
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleStartSequence = async () => {
+    setValidationError(null); // Reset validation error
+    if (!validateInput()) return; // Validate input before proceeding
+
     try {
       await makeSequentialCalls(phoneNumber, parseInt(numCalls, 10));
       if (message) {
-        // Implement SMS sending logic here
+        // Implement SMS sending logic here (make sure to implement it)
+        await sendSms(phoneNumber, message); // Assuming this function exists
       }
     } catch (error) {
       console.error('Sequence failed:', error);
@@ -32,11 +39,11 @@ const CallInput = () => {
 
   const validateInput = () => {
     if (!validatePhoneNumber(phoneNumber)) {
-      handleError(new Error('Invalid phone number'), 'validation');
+      setValidationError('Invalid phone number');
       return false;
     }
     if (!validateNumberOfCalls(numCalls)) {
-      handleError(new Error('Number of calls must be between 1 and 10'), 'validation');
+      setValidationError('Number of calls must be between 1 and 10');
       return false;
     }
     return true;
@@ -59,6 +66,9 @@ const CallInput = () => {
           }
           keyboardType="phone-pad"
         />
+        {validationError && !validatePhoneNumber(phoneNumber) && (
+          <Text style={styles.errorText}>{validationError}</Text>
+        )}
         <TextInput
           style={styles.input}
           placeholder="Number of Calls"
@@ -68,6 +78,9 @@ const CallInput = () => {
           }
           keyboardType="numeric"
         />
+        {validationError && !validateNumberOfCalls(numCalls) && (
+          <Text style={styles.errorText}>{validationError}</Text>
+        )}
         <Button
           title={
             isRunning
@@ -93,6 +106,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 8,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 14,
+    marginBottom: 8,
   },
 });
 

@@ -19,6 +19,7 @@ interface CallLogItem {
   status: string;
   timestamp: number;
   duration?: number;
+  note?: string;
 }
 
 const CallLogList: React.FC = () => {
