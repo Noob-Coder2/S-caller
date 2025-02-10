@@ -3,6 +3,10 @@
 # dependencies
 node_modules/
 
+# Ignore build files
+android/.gradle/
+android/build/
+
 # Expo
 .expo/
 dist/
