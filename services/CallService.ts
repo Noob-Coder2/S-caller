@@ -78,10 +78,23 @@ const handleCallStates = (event: string) => {
         id: `${Date.now()}-${Math.random()}`,
         timestamp: Date.now(),
         type: 'call',
-        status: 'failed',
+        status: 'rejected/missed/busy',
         phoneNumber: state.formData.phoneNumber
       }));
       break;
+      default:
+      // Fallback for unknown states
+      setTimeout(() => {
+        if (!state.sequenceState.isRunning) return;
+        store.dispatch(addCallLog({
+          id: `${Date.now()}-${Math.random()}`,
+          timestamp: Date.now(),
+          type: 'call',
+          status: 'unknown',
+          phoneNumber: state.formData.phoneNumber,
+          note: 'Call status not detected',
+        }));
+      }, CALL_TIMEOUT_MS);
   }
 };
 

@@ -4,7 +4,7 @@ interface CallState {
   callHistory: Array<{
     id: string;
     type: 'call' | 'sms';
-    status: 'pending' | 'success' | 'failed';
+    status: 'pending' | 'success' | 'failed'| 'unknown'|'rejected/missed/busy';
     timestamp: number;
     duration?: number;
     message?: string;

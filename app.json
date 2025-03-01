@@ -4,7 +4,7 @@
     "slug": "S-caller",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "adaptive-icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -23,7 +23,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.pro_coder2.Scaller",
@@ -38,14 +38,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "adaptive-icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/adaptive-icon.png",
+          "image": "adaptive-icon.png",
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
@@ -61,6 +61,7 @@
       "eas": {
         "projectId": "ede0347a-e470-4bce-8e23-46cfabb02701"
       }
-    }
+    },
+    "owner": "pro_coder2"
   }
 }
